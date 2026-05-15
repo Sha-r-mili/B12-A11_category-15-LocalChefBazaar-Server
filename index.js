@@ -41,7 +41,8 @@ async function run() {
     const requestsCollection = db.collection('requests');
     const paymentsCollection = db.collection('payments');
 
-    // ─── JWT MIDDLEWARE ───────────────────────────
+    // JWT verify middleware - protects private routes
+
     const verifyToken = (req, res, next) => {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).send({ message: 'Unauthorized' });
