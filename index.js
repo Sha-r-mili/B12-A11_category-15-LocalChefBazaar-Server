@@ -41,7 +41,7 @@ async function run() {
     const requestsCollection = db.collection('requests');
     const paymentsCollection = db.collection('payments');
 
-    // JWT verify middleware - protects private routes
+    // JWT middleware: verifyToken, verifyAdmin, verifyChef for route protection
 
     const verifyToken = (req, res, next) => {
       const authHeader = req.headers.authorization;
@@ -78,10 +78,9 @@ async function run() {
       res.send({ token });
     });
 
-    // ══════════════════════════════════════════════
-    // USER ROUTES
-    // ══════════════════════════════════════════════
 
+    // User routes: register, get user by email, get all users, make fraud
+    
     app.post('/users', async (req, res) => {
       const user = req.body;
       const existing = await usersCollection.findOne({ email: user.email });
