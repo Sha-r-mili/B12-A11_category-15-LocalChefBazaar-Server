@@ -338,7 +338,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // PAYMENT ROUTES
+    // Payment routes: Stripe payment intent and payment history
     // ══════════════════════════════════════════════
 
     app.post('/create-payment-intent', verifyToken, async (req, res) => {
