@@ -213,7 +213,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // FAVORITES ROUTES
+    // Favorites routes: get, add, delete with duplicate check
     // ══════════════════════════════════════════════
 
     app.get('/favorites/:email', verifyToken, async (req, res) => {
