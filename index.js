@@ -267,7 +267,7 @@ async function run() {
     
 
     // Order status routes: cancel, accept, deliver for chef dashboard
-    
+
     app.patch('/orders/status/:id', verifyToken, verifyChef, async (req, res) => {
       const id = req.params.id;
       const { orderStatus } = req.body;
@@ -288,7 +288,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // REQUESTS ROUTES
+    // Role request routes: submit, get all, approve with chefId, reject
     // ══════════════════════════════════════════════
 
     app.post('/requests', verifyToken, async (req, res) => {
