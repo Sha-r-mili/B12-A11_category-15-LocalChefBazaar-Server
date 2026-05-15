@@ -78,8 +78,9 @@ async function run() {
       res.send({ token });
     });
 
-
+    // ══════════════════════════════════════════════
     // User routes: register, get user by email, get all users, make fraud
+    // ══════════════════════════════════════════════
     
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -115,7 +116,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // MEALS ROUTES
+    // Meals routes: get all, get home, get by id, create, update, delete
     // ══════════════════════════════════════════════
 
     app.get('/meals', async (req, res) => {
