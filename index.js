@@ -360,7 +360,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // ADMIN STATISTICS ROUTE
+    // Admin stats route: total users, pending orders, delivered orders, total payment
     // ══════════════════════════════════════════════
 
     app.get('/admin/stats', verifyToken, verifyAdmin, async (req, res) => {
