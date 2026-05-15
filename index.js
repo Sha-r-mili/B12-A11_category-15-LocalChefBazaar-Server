@@ -241,7 +241,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // ORDERS ROUTES
+    // Orders routes: place order, get by user, get by chef
     // ══════════════════════════════════════════════
 
     app.post('/orders', verifyToken, async (req, res) => {
