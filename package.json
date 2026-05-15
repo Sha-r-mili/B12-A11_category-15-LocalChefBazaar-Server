@@ -1,0 +1,32 @@
+{
+  "name": "b12-a11_category-15-localchefbazaar-server",
+  "version": "1.0.0",
+  "description": "\"# B12-A11_category-15-LocalChefBazaar-Server\" \r \"# B12-A11_category-15-LocalChefBazaar-Server\"",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sha-r-mili/B12-A11_category-15-LocalChefBazaar-Server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sha-r-mili/B12-A11_category-15-LocalChefBazaar-Server/issues"
+  },
+  "homepage": "https://github.com/Sha-r-mili/B12-A11_category-15-LocalChefBazaar-Server#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.2.0",
+    "stripe": "^22.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
