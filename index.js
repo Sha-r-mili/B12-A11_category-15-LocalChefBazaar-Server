@@ -81,7 +81,7 @@ async function run() {
     // ══════════════════════════════════════════════
     // User routes: register, get user by email, get all users, make fraud
     // ══════════════════════════════════════════════
-    
+
     app.post('/users', async (req, res) => {
       const user = req.body;
       const existing = await usersCollection.findOne({ email: user.email });
@@ -174,7 +174,7 @@ async function run() {
     });
 
     // ══════════════════════════════════════════════
-    // REVIEWS ROUTES
+    // Reviews routes: get by food, get by user, post, update, delete
     // ══════════════════════════════════════════════
 
     app.get('/reviews/:foodId', async (req, res) => {
