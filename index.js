@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 
 // ─── MIDDLEWARE ───────────────────────────────────
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://yourlocalchefbazaar.netlify.app'],
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
