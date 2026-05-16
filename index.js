@@ -57,6 +57,7 @@ async function run() {
     const requestsCollection = db.collection('requests');
     const paymentsCollection = db.collection('payments');
 
+    // ── ROLE MIDDLEWARE ──────────────────────────
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const user = await usersCollection.findOne({ email });
@@ -71,32 +72,44 @@ async function run() {
       next();
     };
 
+    // ══════════════════════════════════════════════
     // AUTH
+    // ══════════════════════════════════════════════
     app.post('/jwt', (req, res) => {
       const token = jwt.sign(req.body, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.send({ token });
     });
 
-    // USERS
+    // ══════════════════════════════════════════════
+    // USER ROUTES
+    // ══════════════════════════════════════════════
+
+    // PUBLIC — save new user on registration
     app.post('/users', async (req, res) => {
       const user = req.body;
       const existing = await usersCollection.findOne({ email: user.email });
       if (existing) return res.send({ message: 'User already exists' });
       const result = await usersCollection.insertOne({
-        ...user, role: 'user', status: 'active', createdAt: new Date()
+        ...user,
+        role: 'user',
+        status: 'active',
+        createdAt: new Date()
       });
       res.send(result);
     });
 
+    // PRIVATE — get single user by email
     app.get('/users/:email', verifyToken, async (req, res) => {
       const user = await usersCollection.findOne({ email: req.params.email });
       res.send(user);
     });
 
+    // ADMIN — get all users
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       res.send(await usersCollection.find().toArray());
     });
 
+    // ADMIN — mark user as fraud
     app.patch('/users/fraud/:id', verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.updateOne(
         { _id: new ObjectId(req.params.id) },
@@ -105,17 +118,24 @@ async function run() {
       res.send(result);
     });
 
-    // MEALS — specific routes BEFORE :id route
+    // ══════════════════════════════════════════════
+    // MEALS ROUTES
+    // Note: specific routes MUST come before /:id
+    // ══════════════════════════════════════════════
+
+    // PUBLIC — 6 meals for homepage
     app.get('/meals/home', async (req, res) => {
       const meals = await mealsCollection.find().limit(6).toArray();
       res.send(meals);
     });
 
+    // PRIVATE — get meals by chef email
     app.get('/meals/chef/:email', verifyToken, async (req, res) => {
       const meals = await mealsCollection.find({ userEmail: req.params.email }).toArray();
       res.send(meals);
     });
 
+    // PUBLIC — get all meals with sort and pagination
     app.get('/meals', async (req, res) => {
       const { sort, page = 1, limit = 10 } = req.query;
       const sortOption = sort === 'asc' ? 1 : sort === 'desc' ? -1 : null;
@@ -127,146 +147,206 @@ async function run() {
       res.send({ meals, total });
     });
 
+    // PUBLIC — get single meal by id
     app.get('/meals/:id', async (req, res) => {
       const meal = await mealsCollection.findOne({ _id: new ObjectId(req.params.id) });
       res.send(meal);
     });
 
+    // CHEF — create meal
     app.post('/meals', verifyToken, verifyChef, async (req, res) => {
       const meal = { ...req.body, createdAt: new Date() };
       res.send(await mealsCollection.insertOne(meal));
     });
 
+    // CHEF — update meal
     app.put('/meals/:id', verifyToken, verifyChef, async (req, res) => {
-      const data = req.body;
+      const data = { ...req.body };
       delete data._id;
       res.send(await mealsCollection.updateOne(
-        { _id: new ObjectId(req.params.id) }, { $set: data }
+        { _id: new ObjectId(req.params.id) },
+        { $set: data }
       ));
     });
 
+    // CHEF — delete meal
     app.delete('/meals/:id', verifyToken, verifyChef, async (req, res) => {
       res.send(await mealsCollection.deleteOne({ _id: new ObjectId(req.params.id) }));
     });
 
-    // REVIEWS — specific routes BEFORE :foodId
+    // ══════════════════════════════════════════════
+    // REVIEWS ROUTES
+    // Note: specific routes MUST come before /:foodId
+    // ══════════════════════════════════════════════
+
+    // PUBLIC — 3 reviews for homepage
     app.get('/reviews/home', async (req, res) => {
       res.send(await reviewsCollection.find().limit(3).toArray());
     });
 
+    // PRIVATE — get reviews by user email
     app.get('/reviews/user/:email', verifyToken, async (req, res) => {
       res.send(await reviewsCollection.find({ reviewerEmail: req.params.email }).toArray());
     });
 
+    // PUBLIC — get reviews for a meal
     app.get('/reviews/:foodId', async (req, res) => {
       res.send(await reviewsCollection.find({ foodId: req.params.foodId }).toArray());
     });
 
+    // PRIVATE — add review
     app.post('/reviews', verifyToken, async (req, res) => {
       res.send(await reviewsCollection.insertOne({ ...req.body, date: new Date() }));
     });
 
+    // PRIVATE — update review
     app.put('/reviews/:id', verifyToken, async (req, res) => {
       const { rating, comment } = req.body;
       res.send(await reviewsCollection.updateOne(
-        { _id: new ObjectId(req.params.id) }, { $set: { rating, comment } }
+        { _id: new ObjectId(req.params.id) },
+        { $set: { rating, comment } }
       ));
     });
 
+    // PRIVATE — delete review
     app.delete('/reviews/:id', verifyToken, async (req, res) => {
       res.send(await reviewsCollection.deleteOne({ _id: new ObjectId(req.params.id) }));
     });
 
-    // FAVORITES
+    // ══════════════════════════════════════════════
+    // FAVORITES ROUTES
+    // ══════════════════════════════════════════════
+
+    // PRIVATE — get user favorites
     app.get('/favorites/:email', verifyToken, async (req, res) => {
       res.send(await favoritesCollection.find({ userEmail: req.params.email }).toArray());
     });
 
+    // PRIVATE — add to favorites
     app.post('/favorites', verifyToken, async (req, res) => {
       const favorite = req.body;
       const existing = await favoritesCollection.findOne({
-        userEmail: favorite.userEmail, mealId: favorite.mealId
+        userEmail: favorite.userEmail,
+        mealId: favorite.mealId
       });
       if (existing) return res.send({ message: 'Already in favorites' });
       res.send(await favoritesCollection.insertOne({ ...favorite, addedTime: new Date() }));
     });
 
+    // PRIVATE — remove from favorites
     app.delete('/favorites/:id', verifyToken, async (req, res) => {
       res.send(await favoritesCollection.deleteOne({ _id: new ObjectId(req.params.id) }));
     });
 
-    // ORDERS
+    // ══════════════════════════════════════════════
+    // ORDERS ROUTES
+    // ══════════════════════════════════════════════
+
+    // PRIVATE — place order
     app.post('/orders', verifyToken, async (req, res) => {
       res.send(await ordersCollection.insertOne({
-        ...req.body, orderStatus: 'pending', paymentStatus: 'Pending', orderTime: new Date()
+        ...req.body,
+        orderStatus: 'pending',
+        paymentStatus: 'Pending',
+        orderTime: new Date()
       }));
     });
 
+    // PRIVATE — get orders by user email
     app.get('/orders/user/:email', verifyToken, async (req, res) => {
       res.send(await ordersCollection.find({ userEmail: req.params.email }).toArray());
     });
 
+    // PRIVATE — get orders by chef id
     app.get('/orders/chef/:chefId', verifyToken, async (req, res) => {
       res.send(await ordersCollection.find({ chefId: req.params.chefId }).toArray());
     });
 
+    // PRIVATE — update order status (accept/cancel/deliver)
     app.patch('/orders/status/:id', verifyToken, async (req, res) => {
       res.send(await ordersCollection.updateOne(
-        { _id: new ObjectId(req.params.id) }, { $set: { orderStatus: req.body.orderStatus } }
+        { _id: new ObjectId(req.params.id) },
+        { $set: { orderStatus: req.body.orderStatus } }
       ));
     });
 
+    // PRIVATE — update payment status after stripe payment
     app.patch('/orders/payment/:id', verifyToken, async (req, res) => {
       res.send(await ordersCollection.updateOne(
-        { _id: new ObjectId(req.params.id) }, { $set: { paymentStatus: 'paid' } }
+        { _id: new ObjectId(req.params.id) },
+        { $set: { paymentStatus: 'paid' } }
       ));
     });
 
-    // REQUESTS
+    // ══════════════════════════════════════════════
+    // REQUESTS ROUTES (be a chef / be an admin)
+    // ══════════════════════════════════════════════
+
+    // PRIVATE — submit role request
     app.post('/requests', verifyToken, async (req, res) => {
       res.send(await requestsCollection.insertOne({
-        ...req.body, requestStatus: 'pending', requestTime: new Date()
+        ...req.body,
+        requestStatus: 'pending',
+        requestTime: new Date()
       }));
     });
 
+    // ADMIN — get all requests
     app.get('/requests', verifyToken, verifyAdmin, async (req, res) => {
       res.send(await requestsCollection.find().toArray());
     });
 
+    // ADMIN — approve request
     app.patch('/requests/approve/:id', verifyToken, verifyAdmin, async (req, res) => {
       const request = await requestsCollection.findOne({ _id: new ObjectId(req.params.id) });
       let userUpdate = {};
       if (request.requestType === 'chef') {
-        userUpdate = { role: 'chef', chefId: `chef-${Math.floor(1000 + Math.random() * 9000)}` };
+        const chefId = `chef-${Math.floor(1000 + Math.random() * 9000)}`;
+        userUpdate = { role: 'chef', chefId };
       } else {
         userUpdate = { role: 'admin' };
       }
-      await usersCollection.updateOne({ email: request.userEmail }, { $set: userUpdate });
+      await usersCollection.updateOne(
+        { email: request.userEmail },
+        { $set: userUpdate }
+      );
       res.send(await requestsCollection.updateOne(
-        { _id: new ObjectId(req.params.id) }, { $set: { requestStatus: 'approved' } }
+        { _id: new ObjectId(req.params.id) },
+        { $set: { requestStatus: 'approved' } }
       ));
     });
 
+    // ADMIN — reject request
     app.patch('/requests/reject/:id', verifyToken, verifyAdmin, async (req, res) => {
       res.send(await requestsCollection.updateOne(
-        { _id: new ObjectId(req.params.id) }, { $set: { requestStatus: 'rejected' } }
+        { _id: new ObjectId(req.params.id) },
+        { $set: { requestStatus: 'rejected' } }
       ));
     });
 
-    // PAYMENTS
+    // ══════════════════════════════════════════════
+    // PAYMENT ROUTES
+    // ══════════════════════════════════════════════
+
+    // PRIVATE — create stripe payment intent
     app.post('/create-payment-intent', verifyToken, async (req, res) => {
       const amount = Math.round(req.body.price * 100);
       const paymentIntent = await stripe.paymentIntents.create({
-        amount, currency: 'usd', payment_method_types: ['card']
+        amount,
+        currency: 'usd',
+        payment_method_types: ['card']
       });
       res.send({ clientSecret: paymentIntent.client_secret });
     });
 
+    // PRIVATE — save payment history
     app.post('/payments', verifyToken, async (req, res) => {
       res.send(await paymentsCollection.insertOne({ ...req.body, paidAt: new Date() }));
     });
 
+    // ══════════════════════════════════════════════
     // ADMIN STATS
+    // ══════════════════════════════════════════════
     app.get('/admin/stats', verifyToken, verifyAdmin, async (req, res) => {
       const totalUsers = await usersCollection.countDocuments();
       const ordersPending = await ordersCollection.countDocuments({ orderStatus: 'pending' });
